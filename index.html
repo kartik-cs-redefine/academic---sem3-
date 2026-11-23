@@ -1177,6 +1177,43 @@
 
     /* Mobile / Small Tablet (768px or less) */
     @media (max-width: 768px) {
+      /* Mobile Download Modal */
+      .dl-modal-overlay {
+        padding: 12px;
+      }
+      .dl-modal-header {
+        padding: 16px 16px 12px 16px;
+        gap: 8px;
+      }
+      .dl-modal-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.15rem;
+      }
+      .dl-modal-title {
+        font-size: 0.85rem;
+      }
+      .dl-modal-subtitle {
+        font-size: 0.68rem;
+        max-width: 200px;
+      }
+      .dl-modal-body {
+        padding: 16px;
+        gap: 8px;
+      }
+      .dl-progress-meta {
+        font-size: 0.74rem;
+      }
+      .dl-bytes-row {
+        font-size: 0.68rem;
+      }
+      .dl-modal-footer {
+        padding: 12px 16px;
+      }
+      .dl-modal-hint {
+        font-size: 0.72rem;
+      }
+
       html, body {
         width: 100%;
         max-width: 100%;
@@ -1631,7 +1668,238 @@
       -webkit-overflow-scrolling: touch;
     }
 
-</style>
+
+    /* ==========================================================================
+       DOWNLOAD LOADER MODAL (BOXY SAAS / HIGH-TECH PROGRESS OVERLAY)
+       ========================================================================== */
+    .dl-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .dl-modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .dl-modal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-medium);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 0 1px var(--border-subtle);
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+      overflow: hidden;
+      transform: translateY(12px) scale(0.98);
+      transition: transform 0.25s ease;
+    }
+
+    .dl-modal-overlay.active .dl-modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    /* Top Glowing Accent Line */
+    .dl-modal-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--gold) 50%, var(--success) 100%);
+    }
+
+    .dl-modal-header {
+      padding: 20px 22px 16px 22px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .dl-modal-icon-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .dl-modal-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      animation: pulseGlow 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { border-color: var(--border-medium); }
+      50% { border-color: var(--primary); }
+    }
+
+    .dl-modal-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      font-family: 'Fira Code', monospace;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dl-modal-subtitle {
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+      font-family: 'Fira Code', monospace;
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dl-modal-close {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-tertiary);
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: 'Fira Code', monospace;
+      flex-shrink: 0;
+    }
+
+    .dl-modal-close:hover {
+      border-color: var(--border-medium);
+      color: var(--text-primary);
+      background: var(--bg-card);
+    }
+
+    .dl-modal-body {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dl-progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .dl-status-text {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .dl-pct-text {
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    /* Boxy Progress Track */
+    .dl-progress-track {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dl-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      transition: width 0.15s ease-out;
+      position: relative;
+    }
+
+    .dl-progress-fill.complete {
+      background: var(--success);
+    }
+
+    /* Animated Shimmer Stripe */
+    .dl-progress-fill::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.25) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      animation: progressShimmer 1.5s infinite linear;
+    }
+
+    @keyframes progressShimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .dl-bytes-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--text-tertiary);
+      font-family: 'Fira Code', monospace;
+      margin-top: 2px;
+    }
+
+    .dl-speed-tag {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .dl-modal-footer {
+      padding: 14px 22px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .dl-modal-hint {
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+      line-height: 1.45;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+  </style>
 </head>
 <body>
 
@@ -1853,7 +2121,7 @@
                 <div class="dl-subtitle">66 PYQs strictly ordered by syllabus • 985 KB</div>
               </div>
             </div>
-            <a href="Cyber_Security_PYQ_Unitwise_Questions.pdf" download class="btn-download-pdf"><span>⬇️ Download</span></a>
+            <a href="Cyber_Security_PYQ_Unitwise_Questions.pdf" download class="btn-download-pdf" onclick="handlePdfDownload(event, this)"><span>⬇️ Download</span></a>
           </div>
 
           <!-- Unit 1 -->
@@ -1865,7 +2133,7 @@
                 <div class="dl-subtitle">16 Qs • Easy English + Hinglish • 836 KB</div>
               </div>
             </div>
-            <a href="Cyber_Security_Unit1_Solved_Answers.pdf" download class="btn-download-pdf gold"><span>⬇️ Download</span></a>
+            <a href="Cyber_Security_Unit1_Solved_Answers.pdf" download class="btn-download-pdf gold" onclick="handlePdfDownload(event, this)"><span>⬇️ Download</span></a>
           </div>
 
           <!-- Unit 2 -->
@@ -1877,7 +2145,7 @@
                 <div class="dl-subtitle">9 Qs • Mobile & Wireless Security • 735 KB</div>
               </div>
             </div>
-            <a href="Cyber_Security_Unit2_Solved_Answers.pdf" download class="btn-download-pdf" style="color:#38bdf8; border-color:#38bdf8;">
+            <a href="Cyber_Security_Unit2_Solved_Answers.pdf" download class="btn-download-pdf" style="color:#38bdf8; border-color:#38bdf8;" onclick="handlePdfDownload(event, this)">
               <span>⬇️ Download</span>
             </a>
           </div>
@@ -1891,7 +2159,7 @@
                 <div class="dl-subtitle">8 Qs • Tools & Attacks • 862 KB</div>
               </div>
             </div>
-            <a href="Cyber_Security_Unit3_Solved_Answers.pdf" download class="btn-download-pdf" style="color:#a855f7; border-color:#a855f7;">
+            <a href="Cyber_Security_Unit3_Solved_Answers.pdf" download class="btn-download-pdf" style="color:#a855f7; border-color:#a855f7;" onclick="handlePdfDownload(event, this)">
               <span>⬇️ Download</span>
             </a>
           </div>
@@ -1905,7 +2173,7 @@
                 <div class="dl-subtitle">13 Qs • Forensics Life Cycle • 732 KB</div>
               </div>
             </div>
-            <a href="Cyber_Security_Unit4_Solved_Answers.pdf" download class="btn-download-pdf" style="color:#ec4899; border-color:#ec4899;">
+            <a href="Cyber_Security_Unit4_Solved_Answers.pdf" download class="btn-download-pdf" style="color:#ec4899; border-color:#ec4899;" onclick="handlePdfDownload(event, this)">
               <span>⬇️ Download</span>
             </a>
           </div>
@@ -1919,7 +2187,7 @@
                 <div class="dl-subtitle">18 Qs • Policies, Laws & IPR • 992 KB</div>
               </div>
             </div>
-            <a href="Cyber_Security_Unit5_Solved_Answers.pdf" download class="btn-download-pdf" style="color:#10b981; border-color:#10b981;">
+            <a href="Cyber_Security_Unit5_Solved_Answers.pdf" download class="btn-download-pdf" style="color:#10b981; border-color:#10b981;" onclick="handlePdfDownload(event, this)">
               <span>⬇️ Download</span>
             </a>
           </div>
@@ -1973,7 +2241,45 @@
     ↑
   </button>
 
-  <!-- Toast Notification Container -->
+    <!-- PDF Download Progress Modal -->
+  <div class="dl-modal-overlay" id="dlModalOverlay" onclick="closeDownloadModal()">
+    <div class="dl-modal-card" onclick="event.stopPropagation()">
+      <div class="dl-modal-header">
+        <div class="dl-modal-icon-wrap">
+          <div class="dl-modal-icon" id="dlModalIcon">📥</div>
+          <div>
+            <div class="dl-modal-title" id="dlModalTitle">Downloading PDF Document</div>
+            <div class="dl-modal-subtitle" id="dlModalFilename">Cyber_Security_Study_Document.pdf</div>
+          </div>
+        </div>
+        <button class="dl-modal-close" onclick="closeDownloadModal()" title="Close">✕</button>
+      </div>
+
+      <div class="dl-modal-body">
+        <div class="dl-progress-meta">
+          <span class="dl-status-text" id="dlStatusText">Connecting & fetching file...</span>
+          <span class="dl-pct-text" id="dlPctText">0%</span>
+        </div>
+
+        <div class="dl-progress-track">
+          <div class="dl-progress-fill" id="dlProgressFill"></div>
+        </div>
+
+        <div class="dl-bytes-row">
+          <span id="dlBytesText">0 KB / calculating...</span>
+          <span class="dl-speed-tag">Official Study PDF</span>
+        </div>
+      </div>
+
+      <div class="dl-modal-footer">
+        <div class="dl-modal-hint" id="dlModalHint">
+          ⚡ Preparing print-ready A4 document for your local device...
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Toast Notification Container -->
   <div class="toast" id="toastBox">
     <span id="toastMsg">Action completed</span>
   </div>
@@ -2239,6 +2545,164 @@
     }
 
     // Initialization
+    
+    // ==========================================================================
+    // INTERACTIVE PDF DOWNLOAD LOADER & PROGRESS CONTROLLER
+    // ==========================================================================
+    let currentDownloadXhr = null;
+
+    function handlePdfDownload(event, btn) {
+      if (event) event.preventDefault();
+      const url = btn.getAttribute('href');
+      if (!url) return;
+
+      const filename = url.split('/').pop().split('?')[0];
+      const card = btn.closest('.dl-card');
+      const title = card ? (card.querySelector('.dl-title')?.innerText || filename) : filename;
+
+      startPdfDownload(url, filename, title, btn);
+    }
+
+    function startPdfDownload(url, filename, title, btn) {
+      const overlay = document.getElementById('dlModalOverlay');
+      const modalIcon = document.getElementById('dlModalIcon');
+      const modalTitle = document.getElementById('dlModalTitle');
+      const modalFilename = document.getElementById('dlModalFilename');
+      const statusText = document.getElementById('dlStatusText');
+      const pctText = document.getElementById('dlPctText');
+      const progressFill = document.getElementById('dlProgressFill');
+      const bytesText = document.getElementById('dlBytesText');
+      const hintText = document.getElementById('dlModalHint');
+
+      // Abort previous download if any
+      if (currentDownloadXhr) {
+        currentDownloadXhr.abort();
+        currentDownloadXhr = null;
+      }
+
+      // Initial modal state
+      modalIcon.innerHTML = '📥';
+      modalTitle.innerText = title;
+      modalFilename.innerText = filename;
+      statusText.innerText = 'Connecting & requesting PDF...';
+      pctText.innerText = '0%';
+      progressFill.style.width = '0%';
+      progressFill.className = 'dl-progress-fill';
+      bytesText.innerText = '0 KB / calculating...';
+      hintText.innerText = '⚡ Fetching verified study guide. Please hold on a moment...';
+
+      // Button loading indicator
+      const originalBtnHTML = btn.innerHTML;
+      btn.style.pointerEvents = 'none';
+      btn.innerHTML = '<span>⏳ Downloading...</span>';
+
+      overlay.classList.add('active');
+
+      const xhr = new XMLHttpRequest();
+      currentDownloadXhr = xhr;
+      xhr.open('GET', url, true);
+      xhr.responseType = 'blob';
+
+      // Simulation fallback for environments where lengthComputable is false
+      let simulatedPct = 0;
+      const simTimer = setInterval(() => {
+        if (simulatedPct < 85) {
+          simulatedPct += 5;
+          if (!xhr.lengthComputable && progressFill.style.width !== '100%') {
+            progressFill.style.width = simulatedPct + '%';
+            pctText.innerText = simulatedPct + '%';
+            statusText.innerText = 'Receiving stream data... ' + simulatedPct + '%';
+          }
+        }
+      }, 140);
+
+      xhr.onprogress = function(e) {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          const loadedKB = Math.round(e.loaded / 1024);
+          const totalKB = Math.round(e.total / 1024);
+          progressFill.style.width = pct + '%';
+          pctText.innerText = pct + '%';
+          statusText.innerText = 'Downloading PDF: ' + pct + '%';
+          bytesText.innerText = `${loadedKB} KB / ${totalKB} KB`;
+        }
+      };
+
+      xhr.onload = function() {
+        clearInterval(simTimer);
+        if (xhr.status === 200 || xhr.status === 206) {
+          progressFill.style.width = '100%';
+          progressFill.classList.add('complete');
+          pctText.innerText = '100%';
+          modalIcon.innerHTML = '✅';
+          statusText.innerText = 'Download complete! Saving to device...';
+          hintText.innerText = '🎉 Successfully downloaded! Check your downloads folder.';
+          btn.innerHTML = '<span>✅ Saved!</span>';
+
+          // Trigger native browser download of the blob
+          const blob = xhr.response;
+          const blobUrl = window.URL.createObjectURL(blob);
+          const tempLink = document.createElement('a');
+          tempLink.href = blobUrl;
+          tempLink.download = filename;
+          document.body.appendChild(tempLink);
+          tempLink.click();
+          document.body.removeChild(tempLink);
+
+          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 10000);
+          showToast('📥 Downloaded: ' + filename);
+
+          // Close modal after brief confirmation
+          setTimeout(() => {
+            closeDownloadModal();
+            setTimeout(() => {
+              btn.innerHTML = originalBtnHTML;
+              btn.style.pointerEvents = '';
+            }, 1200);
+          }, 1500);
+        } else {
+          fallbackDirectDownload();
+        }
+      };
+
+      xhr.onerror = function() {
+        clearInterval(simTimer);
+        fallbackDirectDownload();
+      };
+
+      xhr.onabort = function() {
+        clearInterval(simTimer);
+        btn.innerHTML = originalBtnHTML;
+        btn.style.pointerEvents = '';
+      };
+
+      function fallbackDirectDownload() {
+        modalIcon.innerHTML = '⚠️';
+        statusText.innerText = 'Direct download fallback initiated...';
+        hintText.innerText = 'Starting standard browser download...';
+        btn.innerHTML = originalBtnHTML;
+        btn.style.pointerEvents = '';
+
+        const fallbackLink = document.createElement('a');
+        fallbackLink.href = url;
+        fallbackLink.download = filename;
+        document.body.appendChild(fallbackLink);
+        fallbackLink.click();
+        document.body.removeChild(fallbackLink);
+
+        setTimeout(closeDownloadModal, 1200);
+      }
+    }
+
+    function closeDownloadModal() {
+      const overlay = document.getElementById('dlModalOverlay');
+      if (overlay) overlay.classList.remove('active');
+      if (currentDownloadXhr && currentDownloadXhr.readyState !== 4) {
+        currentDownloadXhr.abort();
+        currentDownloadXhr = null;
+      }
+    }
+
     initTheme();
     filterQuestions();
     updateMasteryStats();
