@@ -2549,7 +2549,7 @@
     // ==========================================================================
     // INTERACTIVE PDF DOWNLOAD LOADER & PROGRESS CONTROLLER
     // ==========================================================================
-    let currentDownloadXhr = null;
+    let currentDownloadController = null;
 
     function handlePdfDownload(event, btn) {
       if (event) event.preventDefault();
@@ -2563,7 +2563,7 @@
       startPdfDownload(url, filename, title, btn);
     }
 
-    function startPdfDownload(url, filename, title, btn) {
+    async function startPdfDownload(url, filename, title, btn) {
       const overlay = document.getElementById('dlModalOverlay');
       const modalIcon = document.getElementById('dlModalIcon');
       const modalTitle = document.getElementById('dlModalTitle');
@@ -2575,10 +2575,13 @@
       const hintText = document.getElementById('dlModalHint');
 
       // Abort previous download if any
-      if (currentDownloadXhr) {
-        currentDownloadXhr.abort();
-        currentDownloadXhr = null;
+      if (currentDownloadController) {
+        currentDownloadController.abort();
+        currentDownloadController = null;
       }
+
+      const controller = new AbortController();
+      currentDownloadController = controller;
 
       // Initial modal state
       modalIcon.innerHTML = '📥';
@@ -2587,8 +2590,8 @@
       statusText.innerText = 'Connecting & requesting PDF...';
       pctText.innerText = '0%';
       progressFill.style.width = '0%';
-      progressFill.className = 'dl-progress-fill';
-      bytesText.innerText = '0 KB / calculating...';
+      progressFill.classList.remove('complete');
+      bytesText.innerText = 'Preparing transfer...';
       hintText.innerText = '⚡ Fetching verified study guide. Please hold on a moment...';
 
       // Button loading indicator
@@ -2598,49 +2601,51 @@
 
       overlay.classList.add('active');
 
-      const xhr = new XMLHttpRequest();
-      currentDownloadXhr = xhr;
-      xhr.open('GET', url, true);
-      xhr.responseType = 'blob';
+      let currentPct = 0;
+      let isCompleted = false;
 
-      // Simulation fallback for environments where lengthComputable is false
-      let simulatedPct = 0;
-      const simTimer = setInterval(() => {
-        if (simulatedPct < 85) {
-          simulatedPct += 5;
-          if (!xhr.lengthComputable && progressFill.style.width !== '100%') {
-            progressFill.style.width = simulatedPct + '%';
-            pctText.innerText = simulatedPct + '%';
-            statusText.innerText = 'Receiving stream data... ' + simulatedPct + '%';
-          }
+      // Smooth progress ticker (0% -> 95%) so user immediately sees active feedback
+      const ticker = setInterval(() => {
+        if (isCompleted) {
+          clearInterval(ticker);
+          return;
         }
-      }, 140);
-
-      xhr.onprogress = function(e) {
-        if (e.lengthComputable) {
-          const pct = Math.round((e.loaded / e.total) * 100);
-          const loadedKB = Math.round(e.loaded / 1024);
-          const totalKB = Math.round(e.total / 1024);
-          progressFill.style.width = pct + '%';
-          pctText.innerText = pct + '%';
-          statusText.innerText = 'Downloading PDF: ' + pct + '%';
-          bytesText.innerText = `${loadedKB} KB / ${totalKB} KB`;
+        if (currentPct < 40) {
+          currentPct += 8;
+        } else if (currentPct < 70) {
+          currentPct += 6;
+        } else if (currentPct < 90) {
+          currentPct += 4;
+        } else if (currentPct < 95) {
+          currentPct += 1;
         }
-      };
+        progressFill.style.width = currentPct + '%';
+        pctText.innerText = currentPct + '%';
+        statusText.innerText = 'Receiving stream data... ' + currentPct + '%';
+      }, 70);
 
-      xhr.onload = function() {
-        clearInterval(simTimer);
-        if (xhr.status === 200 || xhr.status === 206) {
-          progressFill.style.width = '100%';
-          progressFill.classList.add('complete');
-          pctText.innerText = '100%';
-          modalIcon.innerHTML = '✅';
-          statusText.innerText = 'Download complete! Saving to device...';
-          hintText.innerText = '🎉 Successfully downloaded! Check your downloads folder.';
-          btn.innerHTML = '<span>✅ Saved!</span>';
+      // Safety timeout: if for any network reason fetch takes > 3.5s, trigger direct download
+      const safetyTimeout = setTimeout(() => {
+        if (!isCompleted) {
+          finishDownload(null, true);
+        }
+      }, 3500);
 
-          // Trigger native browser download of the blob
-          const blob = xhr.response;
+      function finishDownload(blob, isFallback = false) {
+        if (isCompleted) return;
+        isCompleted = true;
+        clearInterval(ticker);
+        clearTimeout(safetyTimeout);
+
+        progressFill.style.width = '100%';
+        progressFill.classList.add('complete');
+        pctText.innerText = '100%';
+        modalIcon.innerHTML = '✅';
+        statusText.innerText = 'Download complete! Saving to device...';
+        hintText.innerText = '🎉 Successfully downloaded! Check your downloads folder.';
+        btn.innerHTML = '<span>✅ Saved!</span>';
+
+        if (blob) {
           const blobUrl = window.URL.createObjectURL(blob);
           const tempLink = document.createElement('a');
           tempLink.href = blobUrl;
@@ -2648,58 +2653,85 @@
           document.body.appendChild(tempLink);
           tempLink.click();
           document.body.removeChild(tempLink);
-
           setTimeout(() => window.URL.revokeObjectURL(blobUrl), 10000);
-          showToast('📥 Downloaded: ' + filename);
-
-          // Close modal after brief confirmation
-          setTimeout(() => {
-            closeDownloadModal();
-            setTimeout(() => {
-              btn.innerHTML = originalBtnHTML;
-              btn.style.pointerEvents = '';
-            }, 1200);
-          }, 1500);
         } else {
-          fallbackDirectDownload();
+          // Native anchor download fallback
+          const fallbackLink = document.createElement('a');
+          fallbackLink.href = url;
+          fallbackLink.download = filename;
+          document.body.appendChild(fallbackLink);
+          fallbackLink.click();
+          document.body.removeChild(fallbackLink);
         }
-      };
 
-      xhr.onerror = function() {
-        clearInterval(simTimer);
-        fallbackDirectDownload();
-      };
+        showToast('📥 Downloaded: ' + filename);
 
-      xhr.onabort = function() {
-        clearInterval(simTimer);
-        btn.innerHTML = originalBtnHTML;
-        btn.style.pointerEvents = '';
-      };
+        // Auto close modal after pleasant confirmation
+        setTimeout(() => {
+          closeDownloadModal();
+          setTimeout(() => {
+            btn.innerHTML = originalBtnHTML;
+            btn.style.pointerEvents = '';
+          }, 800);
+        }, 1200);
+      }
 
-      function fallbackDirectDownload() {
-        modalIcon.innerHTML = '⚠️';
-        statusText.innerText = 'Direct download fallback initiated...';
-        hintText.innerText = 'Starting standard browser download...';
-        btn.innerHTML = originalBtnHTML;
-        btn.style.pointerEvents = '';
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
 
-        const fallbackLink = document.createElement('a');
-        fallbackLink.href = url;
-        fallbackLink.download = filename;
-        document.body.appendChild(fallbackLink);
-        fallbackLink.click();
-        document.body.removeChild(fallbackLink);
+        const contentLength = response.headers.get('content-length');
+        const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
 
-        setTimeout(closeDownloadModal, 1200);
+        if (response.body && window.ReadableStream) {
+          const reader = response.body.getReader();
+          let received = 0;
+          const chunks = [];
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            received += value.length;
+            if (totalBytes > 0) {
+              const realPct = Math.min(Math.round((received / totalBytes) * 100), 98);
+              if (realPct > currentPct) {
+                currentPct = realPct;
+                progressFill.style.width = currentPct + '%';
+                pctText.innerText = currentPct + '%';
+                bytesText.innerText = `${Math.round(received / 1024)} KB / ${Math.round(totalBytes / 1024)} KB`;
+                statusText.innerText = `Downloading PDF: ${currentPct}%`;
+              }
+            } else {
+              bytesText.innerText = `${Math.round(received / 1024)} KB downloaded`;
+            }
+          }
+
+          const finalBlob = new Blob(chunks, { type: 'application/pdf' });
+          finishDownload(finalBlob, false);
+        } else {
+          const blob = await response.blob();
+          finishDownload(blob, false);
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          clearInterval(ticker);
+          clearTimeout(safetyTimeout);
+          btn.innerHTML = originalBtnHTML;
+          btn.style.pointerEvents = '';
+          return;
+        }
+        console.warn('Direct fetch failed, falling back to direct anchor download:', err);
+        finishDownload(null, true);
       }
     }
 
     function closeDownloadModal() {
       const overlay = document.getElementById('dlModalOverlay');
       if (overlay) overlay.classList.remove('active');
-      if (currentDownloadXhr && currentDownloadXhr.readyState !== 4) {
-        currentDownloadXhr.abort();
-        currentDownloadXhr = null;
+      if (currentDownloadController) {
+        currentDownloadController.abort();
+        currentDownloadController = null;
       }
     }
 
